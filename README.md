@@ -2,10 +2,10 @@
 
 [![Target MCU](https://img.shields.io/badge/Target%20MCU-STM32H750XB%20%7C%20STM32H745XI-00205B.svg)](https://www.st.com/en/microcontrollers-microprocessors/stm32h7-series.html)
 [![TouchGFX](https://img.shields.io/badge/GUI-TouchGFX%204.24-00A5B5.svg)](https://www.st.com/en/development-tools/touchgfxdesigner.html)
-[![Host Architecture](https://img.shields.io/badge/Host-Apple%20Silicon%20%28ARM64%29-black.svg)](https://www.apple.com/mac/)
-[![Toolchain](https://img.shields.io/badge/Toolchain-Zig%20LLVM%20%7C%20pyOCD-F7A41D.svg)](https://ziglang.org/)
+[![Host Architecture](https://img.shields.io/badge/Host-macOS%20%7C%20Linux%20%7C%20Windows-black.svg)](https://github.com/zhijaysun0915/stm32h7-touchgfx-antigravity-kit)
+[![Toolchain](https://img.shields.io/badge/Toolchain-Zig%20LLVM%20%7C%20pyOCD%20%7C%20ARM--GCC-F7A41D.svg)](https://ziglang.org/)
 
-專為 **MacBook Air / Pro (Apple Silicon macOS)** 與 **Google Antigravity IDE** 打造之 **STM32H7 高效能無頭式 (Headless) TouchGFX 嵌入式 UI 開發套件**。
+專為 **MacBook (Apple Silicon macOS)**、**Linux (Ubuntu/Debian)** 與 **Windows (PowerShell/WSL)** 及 **Google Antigravity IDE** 打造之 **STM32H7 高效能無頭式 (Headless) TouchGFX 嵌入式 UI 自動化套件**。
 
 本專案支援 **STM32H750B-DK** 及 **STM32H745I-DISCO** 開發板（依據 [STMicroelectronics UM2488 使用手冊 Rev 10](https://www.st.com/resource/en/user_manual/um2488-discovery-kits-with-stm32h745xi-and-stm32h750xb-mcus-stmicroelectronics.pdf)），完整打通從**自然語言 UI 需求 -> 向量圖資合成 -> TouchGFX 代碼生成 -> ARM Cortex-M7 交叉編譯 -> 本機模擬驗證 -> STLINK-V3E 實體板燒錄與 UART 遙測**之全自動化開發管線 (Pipeline)。
 
@@ -13,70 +13,188 @@
 
 ## 目錄
 
-- [最新版本說明 (Release v1.0.0)](#最新版本說明-release-v100)
-  - [目前 UI 設計與視覺元件](#目前-ui-設計與視覺元件)
-  - [系統核心功能](#系統核心功能)
-  - [四層驗證機制與結果](#四層驗證機制與結果)
-- [核心功能特色](#核心功能特色)
+- [最新版本發布 (Release v1.0.0)](#最新版本發布-release-v100)
+  - [UI 視覺畫面預覽](#ui-視覺畫面預覽)
+  - [按鈕功能與互動對照表（測試人員手冊）](#按鈕功能與互動對照表測試人員手冊)
+  - [EVM 開發板實體接線對照圖](#evm-開發板實體接線對照圖)
+- [跨平台開發與環境微調指南 (Windows / Linux / macOS)](#跨平台開發與環境微調指南-windows--linux--macos)
+  - [1. macOS (Apple Silicon 原生)](#1-macos-apple-silicon-原生)
+  - [2. Linux (Ubuntu / Debian / Fedora)](#2-linux-ubuntu--debian--fedora)
+  - [3. Windows (PowerShell / MSYS2 / WSL2)](#3-windows-powershell--msys2--wsl2)
+  - [跨平台命令操作對照表](#跨平台命令操作對照表)
 - [系統架構 (3-Layer Architecture)](#系統架構-3-layer-architecture)
 - [記憶體配置與硬體映射 (Memory Map)](#記憶體配置與硬體映射-memory-map)
-- [硬體接線與板子配置指南](#硬體接線與板子配置指南重要)
-  - [1. 實體接口接線 (CN14)](#1-實體接口接線)
-  - [2. 電源跳線與模式確認 (JP6 / SMPS vs LDO)](#2-電源跳線與模式確認-jp6--smps-vs-ldo)
-  - [3. 板載 LED 狀態指示燈判讀](#3-板載-led-狀態指示燈判讀)
-- [開發環境與依賴說明](#開發環境與依賴說明)
+- [硬體接線與電源安全規範 (UM2488)](#硬體接線與電源安全規範-um2488)
 - [完整 Pipeline 操作指南](#完整-pipeline-操作指南)
-  - [一鍵編譯韌體與模擬器](#1-一鍵編譯韌體與模擬器)
-  - [燒錄韌體至開發板](#2-燒錄韌體至開發板)
-  - [監聽 UART 遙測日誌](#3-監聽-uart-遙測日誌)
 - [預編譯成品 (Prebuilt Binaries)](#預編譯成品-prebuilt-binaries)
 - [與 Google Antigravity Agent 協同開發](#與-google-antigravity-agent-協同開發)
 
 ---
 
-## 最新版本說明 (Release v1.0.0)
+## 最新版本發布 (Release v1.0.0)
 
-本專案已正式發布 **v1.0.0**，詳細說明見 [RELEASE_NOTES.md](file:///Users/jaysun/Downloads/stm32h7-touchgfx-antigravity-kit/RELEASE_NOTES.md)。
+🔗 **GitHub Release 頁面**：[Release v1.0.0](https://github.com/zhijaysun0915/stm32h7-touchgfx-antigravity-kit/releases/tag/v1.0.0)  
+📄 **詳細發布說明**：[RELEASE_NOTES.md](file:///Users/jaysun/Downloads/stm32h7-touchgfx-antigravity-kit/RELEASE_NOTES.md)
 
-### 目前 UI 設計與視覺元件
-- **目標螢幕**：4.3 吋 480×272 16bpp (RGB565) LCD，深色科技主題（Slate Dark，底色 `#0F172A`）。
-- **首頁儀表板 (`DashboardScreen`)**：
-  - **背景與卡片佈局**：480×272 漸層底圖 (`bg_dashboard.png`)，搭配左右兩塊 216×160 毛玻璃質感面板 (`card_panel.png`)。
-  - **頂部動態狀態標題 (`titleText`)**：帶有 Wildcard 緩衝區之即時核心溫度顯示 (`STM32H7 Temp: <value> C`)。
-  - **左側負載指示條 (`loadBar`)**：`BoxProgress` 青藍色動態指示條 (`#38BDF8`)，呈現即時 CPU / 系統負載率 (0~100%)。
-  - **Boost 切換按鈕 (`btnBoost`)**：支援正常態與按下態按鈕 (`Toggle Boost LED`)，用以切換超頻狀態與控制板載 LED。
-  - **設定導航按鈕 (`btnNextScreen`)**：點擊切換至設定頁 (`Settings`)。
-- **系統設定畫面 (`SettingsScreen`)**：
-  - 全屏深色背景 (`settingsBg`) 與標題 (`System & Display Settings`)。
-  - 具備左下角返回按鈕 (`btnBack`)。
+### UI 視覺畫面預覽
 
-### 系統核心功能
-1. **MVP (Model-View-Presenter) 狀態循環**：`Model` 每 30 ticks (~500ms) 定期透過 `ModelListener` 發送溫度與負載更新，由 Presenter 驅動 View 進行局部畫面重繪 (`invalidate`)。
-2. **動態數據渲染**：微控制器即時溫度浮點數格式化輸出至標題 Wildcard，負載進度條即時反應系統繁忙度。
-3. **軟硬體交互 (Boost LED 切換)**：按下 `btnBoost` 可切換 Model 的 `boostActive` 狀態（模擬負載跳升至 88%、溫度升至 31.2°C，並控制板載綠色 LED `LD7` (PJ2)）。
-4. **雙向平滑轉場動畫 (Screen Slide Transitions)**：
-   - 首頁點擊 `Settings`：往東平滑滑動 (`Slide East`) 至設定頁。
-   - 設定頁點擊 `Back`：往西平滑滑動 (`Slide West`) 返回主儀表板。
+本套件針對 **4.3 吋 480×272 16bpp (RGB565) LCD** 觸控螢幕進行像素級精準渲染，採用現代科技深色 Slate Dark 主題：
 
-### 四層驗證機制與結果
-1. **無頭代碼與圖資生成驗證** (`run_tgfx_cli.sh`)：成功產生 7 張 RGB565 PNG 圖資並轉出 C++ ViewBase / 字庫 / 圖庫，無語法錯誤。
-2. **ARM Cortex-M7 交叉編譯與記憶體配置驗證** (`build_firmware.sh`)：
-   - **Internal Flash (0x08000000)**: 1,216 Bytes (1.19 KB) 向量表與啟動代碼。
-   - **External QSPI Flash (0x90000000)**: 54,272 Bytes (53.00 KB) 7 張圖資與點陣字庫。
-   - **External SDRAM (0xD0000000)**: 522,240 Bytes (510.00 KB) 480×272 雙緩衝區。
-   - **HEX 映像檔**: 產出 `build/stm32h7_touchgfx.hex` 與 `prebuilt/`。
-3. **本機原生 Host 模擬器驗證** (`build/stm32h7_touchgfx_sim`)：macOS ARM64 原生編譯運行，驗證 Model、Presenter、ViewBase 與 Tick 事件迴圈無記憶體崩潰。
-4. **STLINK-V3E 探針與序列埠驗證** (`flash_board.sh` / `verify_serial.py`)：自動探測 USB SWD 介面，並以 115200 8N1 監聽 USART3 VCP 遙測。
+| 首頁儀表板 (`DashboardScreen`) | 系統設定畫面 (`SettingsScreen`) |
+| :---: | :---: |
+| ![Dashboard Screen Preview](docs/images/dashboard_screen_preview.png) | ![Settings Screen Preview](docs/images/settings_screen_preview.png) |
 
 ---
 
-## 核心功能特色
+### 按鈕功能與互動對照表（測試人員手冊）
 
-1. **純文字驅動 UI (Text-to-Embedded-GUI)**：只需給予自然語言描述，自動產生 480×272 面板所需之 PNG 素材、更新 TouchGFX `.touchgfx` JSON 模型與 `texts.xml`。
-2. **Apple Silicon 原生無頭代碼生成**：內建原生 Python TouchGFX Codegen (`execution/tgfx_codegen.py`)，免去在 macOS 上安裝肥重 Windows 模擬環境的痛苦。
-3. **極速交叉編譯**：整合原生的 ARM Cortex-M7 LLVM / Zig 交叉編譯器與 ld.lld 連結器，數秒內輸出完全符合 UM2488 記憶體佈局之 ELF 與 Intel HEX 韌體。
-4. **本機原生 Host 模擬器**：同一套 TouchGFX MVP (Model-View-Presenter) 業務邏輯，一鍵編譯成 macOS ARM64 原生執行檔驗證流程。
-5. **STLINK-V3E 自動探測與燒錄**：透過 pyOCD 與 STM32_Programmer_CLI 雙後端支援，一鍵偵測 USB SWD 介面並寫入 MCU。
+測試人員在點亮螢幕後，可針對下列互動元件逐項驗證：
+
+| 元件名稱 | 所屬畫面 | 座標與尺寸 (X, Y, W, H) | 圖資素材 (Normal / Pressed) | 觸發動作 (Action / Event) | LCD 畫面預期行為 | 板載硬體反饋 (LED / 遙測) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`btnBoost`**<br>(Toggle Boost LED) | `DashboardScreen` | `(264, 104, 184, 42)` | `btn_action_released.png`<br>`btn_action_pressed.png` | 點擊觸發 `handleBoostClicked()` 調用 `Model::toggleBoostLed()` | 1. 標題溫度由 **26.5°C 跳升至 31.2°C**<br>2. 負載進度條由 **42% 跳升至 88%**<br>3. 再次點擊恢復常態 | **User LED `LD7` (PJ2 綠燈)**：<br>點擊時切換點亮 / 熄滅狀態。 |
+| **`btnNextScreen`**<br>(Settings) | `DashboardScreen` | `(340, 220, 124, 40)` | `btn_primary_released.png`<br>`btn_primary_pressed.png` | 點擊觸發 `OnGotoSettings` 轉場 | 畫面以 **平滑向東滑動 (Slide East)** 換頁進入 `SettingsScreen` | 序列埠可見換頁事件通知 |
+| **`btnBack`**<br>(Back) | `SettingsScreen` | `(16, 220, 124, 40)` | `btn_primary_released.png`<br>`btn_primary_pressed.png` | 點擊觸發 `OnBackToDashboard` 轉場 | 畫面以 **平滑向西滑動 (Slide West)** 換頁返回 `DashboardScreen` | 畫面恢復主儀表板即時遙測刷新 |
+| **`loadBar`**<br>(負載進度條) | `DashboardScreen` | `(34, 160, 180, 14)` | `progress_bg.png` + 動態青藍條 | 自動每 500ms 接收 Model tick 更新 | 進度條隨 CPU 負載狀態動態平滑伸縮 (42% <-> 88%) | 無需手動操作，隨 Telemetry 定期局部刷新 |
+| **`titleText`**<br>(核心溫度標題) | `DashboardScreen` | `(16, 12, 320, 28)` | 文字 Unicode 點陣字庫 (Verdana 24px) | 自動每 500ms 接收 Model tick 更新 | 格式化顯示 `STM32H7 Temp: XX.X C` | 局部重繪文字 Wildcard 緩衝區 |
+
+---
+
+### EVM 開發板實體接線對照圖
+
+![EVM Wiring Diagram](docs/images/evm_wiring_diagram.png)
+
+```
+========================================================================================
+                          STM32H750B-DK 開發板實體接口與跳線佈局圖
+========================================================================================
+
+                 [CN14: STLINK-V3E]                        [CN13: USB OTG]
+                   (Micro-B USB)                            (Micro-B USB)
+                 ★ 燒錄 / 供電 / VCP                       ⚠️ 勿接！僅應用埠
+                       │                                         │
+                       ▼                                         ▼
+             ┌───┬───────────────┬───────────────────────────────┬───┐
+             │   │   [ CN14 ]    │                               │   │
+             │   └───────────────┘                               └───┤
+             │                                                       │
+             │  [JP6] STLK 供電跳線 (確認插在 pins 1-2 'STLK')       │
+             │                                                       │
+             │  (●) LD4 (PWR 綠燈) ── 接線後必須「恆亮」             │
+             │  (●) LD1 (COM 雙色) ── STLINK 狀態指示燈             │
+             │  (●) LD7 (User 綠燈) ── 由 'Toggle Boost LED' 控制   │
+             │  (●) LD6 (User 紅燈) ── 系統錯誤/自訂指示            │
+             │                                                       │
+             │  ┌─────────────────────────────────────────────────┐  │
+             │  │                                                 │  │
+             │  │                                                 │  │
+             │  │            4.3" 480×272 RGB 觸控螢幕            │  │
+             │  │            (RK043FN48H / RK043FN88H)            │  │
+             │  │                                                 │  │
+             │  │                                                 │  │
+             │  └─────────────────────────────────────────────────┘  │
+             │                                                       │
+             │  [B1] 藍色 User 按鈕           [B2] 黑色 Reset 按鈕   │
+             └───────────────────────────────────────────────────────┘
+========================================================================================
+```
+
+---
+
+## 跨平台開發與環境微調指南 (Windows / Linux / macOS)
+
+本套件所有構建與代碼生成核心均採用跨平台設計（純 Python 3、CMake、Ninja、LLVM/Zig 與 pyOCD），無論在 Windows、Linux 或 macOS 均可無痛切換與微調：
+
+### 1. macOS (Apple Silicon 原生)
+- **工具鏈安裝**：
+  ```bash
+  brew install cmake ninja python3
+  # 本專案已內建原生 Apple Silicon Zig/LLVM 與 pyOCD 於 toolchain/
+  ```
+- **一鍵建構與燒錄**：
+  ```bash
+  bash execution/build_firmware.sh
+  bash execution/flash_board.sh
+  ```
+
+### 2. Linux (Ubuntu / Debian / Fedora)
+- **工具鏈安裝** (以 Ubuntu 22.04 / 24.04 為例)：
+  ```bash
+  sudo apt update && sudo apt install -y build-essential cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi python3-pip libusb-1.0-0-dev
+  pip3 install --upgrade pillow pyserial pyelftools intelhex pyocd
+  ```
+- **配置 ST-LINK USB 權限 (Udev Rules)**：
+  ```bash
+  sudo tee /etc/udev/rules.d/49-stlinkv3.rules << 'EOF'
+  SUBSYSTEMS=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="374e", MODE="0666"
+  SUBSYSTEMS=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="374f", MODE="0666"
+  EOF
+  sudo udevadm control --reload-rules && sudo udevadm trigger
+  ```
+- **編譯與燒錄**：
+  ```bash
+  bash execution/build_firmware.sh
+  bash execution/flash_board.sh
+  python3 execution/verify_serial.py --port /dev/ttyACM0
+  ```
+
+### 3. Windows (PowerShell / MSYS2 / WSL2)
+在 Windows 下，開發者可選擇原生 PowerShell 執行，亦可結合官方 Windows 版 TouchGFX Designer：
+- **環境準備 (推薦使用 winget 或 Scoop)**：
+  ```powershell
+  # 1. 安裝建構工具
+  winget install Kitware.CMake
+  winget install Ninja-build.Ninja
+  winget install Python.Python.3.11
+  winget install zig.zig  # 或 winget install Arm.GnuArmEmbeddedToolchain
+
+  # 2. 安裝 Python 依賴
+  pip install --upgrade pillow pyserial pyelftools intelhex pyocd
+  ```
+- **雙引擎 TouchGFX 代碼生成微調**：
+  - **模式 A (原生 Python 無頭生成，免開 Designer)**：
+    ```powershell
+    python execution\tgfx_codegen.py -p TouchGFX\STM32H7_App.touchgfx
+    ```
+  - **模式 B (使用官方 TouchGFX Designer CLI `tgfx.exe`)**：
+    若本機有安裝 TouchGFX Designer (通常位於 `C:\TouchGFX\4.24.0\designer\tgfx.exe`)：
+    ```powershell
+    & "C:\TouchGFX\4.24.0\designer\tgfx.exe" generate -p TouchGFX\STM32H7_App.touchgfx
+    ```
+- **在 Windows 下編譯韌體 (CMake + Ninja)**：
+  ```powershell
+  cmake -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi.cmake -DBOARD_TYPE=STM32H750B_DK
+  ninja -C build
+  ```
+- **在 Windows 下燒錄 (pyOCD 或 STM32CubeProgrammer)**：
+  ```powershell
+  # 方式 1: 使用 pyOCD
+  pyocd load -t stm32h750xx build\stm32h7_touchgfx.elf
+  pyocd reset -t stm32h750xx
+
+  # 方式 2: 使用官方 STM32_Programmer_CLI (支援外掛 QSPI Loader)
+  & "C:\Program Files\STMicroelectronics\STM32Cube\STM32CubeProgrammer\bin\STM32_Programmer_CLI.exe" `
+    -c port=SWD mode=UR reset=HWrst `
+    -el "C:\Program Files\STMicroelectronics\STM32Cube\STM32CubeProgrammer\bin\ExternalLoader\MT25TL01G_STM32H750B-DISCO.stldr" `
+    -w build\stm32h7_touchgfx.elf -v -rst
+  ```
+- **Windows 序列埠監聽**：
+  ```powershell
+  python execution\verify_serial.py --port COM3
+  ```
+
+---
+
+### 跨平台命令操作對照表
+
+| 任務工作 | macOS (Apple Silicon) | Linux (Ubuntu/Debian) | Windows (PowerShell) |
+| :--- | :--- | :--- | :--- |
+| **圖資合成** | `python3 execution/generate_ui_assets.py` | `python3 execution/generate_ui_assets.py` | `python execution\generate_ui_assets.py` |
+| **TouchGFX 代碼產生**| `bash execution/run_tgfx_cli.sh` | `bash execution/run_tgfx_cli.sh` | `python execution\tgfx_codegen.py -p TouchGFX\STM32H7_App.touchgfx` |
+| **一鍵交叉編譯** | `bash execution/build_firmware.sh` | `bash execution/build_firmware.sh` | `cmake --build build` (Ninja) |
+| **主機原生模擬器** | `./build/stm32h7_touchgfx_sim` | `./build/stm32h7_touchgfx_sim` | `.\build\stm32h7_touchgfx_sim.exe` |
+| **ST-LINK 韌體燒錄**| `bash execution/flash_board.sh` | `bash execution/flash_board.sh` | `pyocd load -t stm32h750xx build\stm32h7_touchgfx.elf` |
+| **序列埠遙測監聽** | `python3 execution/verify_serial.py` | `python3 execution/verify_serial.py --port /dev/ttyACM0` | `python execution\verify_serial.py --port COMx` |
 
 ---
 
@@ -87,6 +205,7 @@
 │                 Layer 1: Directives (需求層)                │
 │  - directives/ui_requirements.md (自然語言需求與螢幕規格)    │
 │  - directives/ui_assets_manifest.json (圖資尺寸與顏色定義)  │
+│  - directives/hardware_constraints.md (UM2488 硬體約束)     │
 └──────────────────────────────┬──────────────────────────────┘
                                │
                                ▼
@@ -101,7 +220,7 @@
 │                 Layer 3: Execution (執行層)                 │
 │  - generate_ui_assets.py   : 產出 480×272 LCD 專用圖資      │
 │  - tgfx_codegen.py         : 產出 C++ ViewBase / 字庫 / 圖庫│
-│  - build_firmware.sh       : ARM Cortex-M7 + macOS Sim 編譯 │
+│  - build_firmware.sh       : ARM Cortex-M7 + 主機 Sim 編譯 │
 │  - flash_board.sh          : STLINK-V3E SWD / QSPI 燒錄     │
 │  - verify_serial.py        : VCP UART3 (115200 8N1) 驗證    │
 └─────────────────────────────────────────────────────────────┘
@@ -122,65 +241,33 @@
 
 ---
 
-## 硬體接線與板子配置指南（重要）
+## 硬體接線與電源安全規範 (UM2488)
 
-在將板子連接至 Mac 之前，請務必按照以下步驟核對板子硬體設定：
-
-```
-                      +---------------------------------------+
-                      |           STM32H750B-DK               |
-                      |                                       |
-    [ Mac USB-C ] ===>| [CN14] STLINK-V3E Micro-B (燒錄/供電) |
-                      |                                       |
-                      | [JP6] 跳線確認插在 [STLK] (5V 供電)   |
-                      | [LD4] PWR LED (綠燈恆亮 = 供電正常)    |
-                      | [LD1] COM LED (紅/綠 = STLINK 通訊)   |
-                      |                                       |
-                      |   [ 4.3" 480x272 觸控螢幕 ]           |
-                      +---------------------------------------+
-```
+在將板子連接至電腦前，請務必按照以下步驟核對板子硬體設定：
 
 ### 1. 實體接口接線
-
-1. **連接連接埠**：請使用 Micro-USB 傳輸線，將 Mac 連接到板載 **`CN14` (STLINK-V3E)** 接口。
-   > ⚠️ **警告**：請**勿**接到 `CN13` (USB OTG_FS)，`CN13` 是應用端 USB，不具備 ST-LINK 燒錄器與虛擬序列埠功能！
-2. **集線器注意事項**：若使用 USB-C 轉接器 (Dongle)，請確保轉接器供電穩定（建議直插 Mac 或使用帶供電之 USB-C Hub），避免電壓不足導致外掛 SDRAM 與 LCD 背光閃退。
+- **連接連接埠**：請使用 Micro-USB 傳輸線，將電腦連接到板載 **`CN14` (STLINK-V3E)** 接口。
+  > ⚠️ **警告**：請**勿**接到 `CN13` (USB OTG_FS)，`CN13` 是應用端 USB，不具備 ST-LINK 燒錄器與虛擬序列埠功能！
+- **集線器注意事項**：若使用 USB-C 轉接器 (Dongle)，請確保供電穩定，避免電壓不足導致外掛 SDRAM 與 LCD 背光閃退。
 
 ### 2. 電源跳線與模式確認 (JP6 / SMPS vs LDO)
-
 依據 [UM2488 Section 6.4 (Power supply)]：
 - **供電來源跳線 (`JP6`)**：確認跳線帽插在 **`STLK`**（由 CN14 的 ST-LINK 5V 提供板子電源）。
 - **硬體供電安全規範（防鎖死警告）**：
   - **STM32H750B-DK**：出廠預設為 **LDO 供電模式**。韌體**必須**呼叫 `HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);`（本專案預設參數）。
   - **STM32H745I-DISCO**：出廠預設為 **Direct SMPS 模式**。韌體**必須**呼叫 `HAL_PWREx_ConfigSupply(PWR_DIRECT_SMPS_SUPPLY);`。
-  - ⚠️ **切勿燒錯供電架構**：若在 STM32H750B-DK 上啟用 Direct SMPS，會造成晶片供電死鎖，使 ST-LINK 無法連線（需改動板載 R143/R144 電阻才能救援）。本套件編譯指令已透過 `-DBOARD_TYPE=STM32H750B_DK` 設置嚴密防護。
+  - ⚠️ **切勿燒錯供電架構**：若在 STM32H750B-DK 上啟用 Direct SMPS，會造成晶片供電死鎖，使 ST-LINK 無法連線（需改動板載 R143/R144 電阻才能救援）。
 
 ### 3. 板載 LED 狀態指示燈判讀
-
-- **`LD4 (PWR)` 綠燈**：接上 Mac 後應**立即恆亮**。若不亮，請檢查 USB 線是否僅具充電功能而無數據傳輸，或更換 USB 連接埠。
-- **`LD1 (COM)` 雙色燈**：ST-LINK 狀態燈。
-  - 紅色緩慢閃爍：ST-LINK 正在進行 USB 列舉。
-  - 綠色常亮：ST-LINK 與 Mac 通訊連線成功，準備好接受燒錄。
-  - 紅/綠快速閃爍：正在進行韌體資料傳輸與 Flash 燒錄。
+- **`LD4 (PWR)` 綠燈**：接上電腦後應**立即恆亮**。若不亮，請檢查 USB 線是否僅具充電功能而無數據傳輸，或更換 USB 連接埠。
+- **`LD1 (COM)` 雙色燈**：ST-LINK 狀態燈。綠色常亮表示 ST-LINK 通訊連線成功；紅/綠快速閃爍表示正在進行韌體燒錄。
 - **`LD7 (Green) / LD6 (Red)`**：使用者狀態 LED，分別連接至 MCU 的 `PJ2` 與 `PI13`。
-
----
-
-## 開發環境與依賴說明
-
-本套件環境已完成原生 Apple Silicon 部署，工具鏈位置已配置智慧探測：
-- **交叉編譯**：LLVM / Zig ARM Cortex-M7 + ld.lld（支援 `thumb-freestanding-eabihf`）。
-- **硬體除錯與燒錄**：`pyocd` 0.46.1（含 `libusb_package` 原生驅動與 CMSIS-DAP / STLINK-V3E 支援）。
-- **Python 工具鏈**：Pillow 11.3.0（圖資處理）、pyserial 3.5（序列埠遙測）、pyelftools 0.32、intelhex 2.3.0。
-- **建構系統**：Ninja 1.13.2、CMake、Clang++（原生 macOS 模擬器）。
 
 ---
 
 ## 完整 Pipeline 操作指南
 
 ### 1. 一鍵編譯韌體與模擬器
-
-執行下列指令，自動完成「UI 素材生成 -> C++ 類別產生 -> ARM ELF/HEX 編譯 -> macOS 模擬器執行」：
 
 ```bash
 # 預設編譯 STM32H750B-DK (LDO 供電模式)
@@ -190,33 +277,13 @@ bash execution/build_firmware.sh
 BOARD_TYPE=STM32H745I_DISCO bash execution/build_firmware.sh
 ```
 
-**終端成功輸出示例**：
-```text
-[Build] Step 1: Running Headless TouchGFX Code & Asset Generator...
-[generate_ui_assets] Generated 7 PNG assets in TouchGFX/assets/images
-[tgfx_codegen] Generated TouchGFX C++ code for 2 screen(s), 7 bitmap(s)
-[Build] Step 2: Compiling & Linking ARM Cortex-M7 Firmware (Target: STM32H750B_DK)...
-==========================================================================
- STM32H7 + TouchGFX Firmware Memory Map Summary (stm32h7_touchgfx.elf)
-==========================================================================
- Internal Flash (0x08000000) :     1216 B  (1.19 KB)
- External QSPI  (0x90000000) :    54272 B  (53.00 KB)
- External SDRAM (0xD0000000) :   522240 B  (510.00 KB - 480x272x2x2 FB)
- Intel HEX Image Generated   : build/stm32h7_touchgfx.hex
-==========================================================================
-[Build] Step 3: Building & Running Native macOS Host Simulator...
-[Build] Complete! Artifacts ready: build/stm32h7_touchgfx.elf, build/stm32h7_touchgfx.hex
-```
-
 ### 2. 燒錄韌體至開發板
 
-確保板子 **CN14** 已連接至 Mac，執行：
+確保板子 **CN14** 已連接至電腦，執行：
 
 ```bash
 bash execution/flash_board.sh
 ```
-
-腳本會優先尋找 `STM32_Programmer_CLI`（具備外掛 QSPI Loader `MT25TL01G_*.stldr`），若本機未安裝則自動調用內建之 `pyOCD` 進行 SWD 燒錄。
 
 ### 3. 監聽 UART 遙測日誌
 
@@ -225,7 +292,6 @@ STM32H750B-DK 的 STLINK-V3E 內建 Virtual COM Port (VCP)，連接在 MCU 的 `
 ```bash
 python3 execution/verify_serial.py
 ```
-> 預設以 115200 8N1 自動掃描 `/dev/cu.usbmodem*` 並輸出即時啟動訊息。
 
 ---
 

@@ -13,6 +13,10 @@
 
 ## 目錄
 
+- [最新版本說明 (Release v1.0.0)](#最新版本說明-release-v100)
+  - [目前 UI 設計與視覺元件](#目前-ui-設計與視覺元件)
+  - [系統核心功能](#系統核心功能)
+  - [四層驗證機制與結果](#四層驗證機制與結果)
 - [核心功能特色](#核心功能特色)
 - [系統架構 (3-Layer Architecture)](#系統架構-3-layer-architecture)
 - [記憶體配置與硬體映射 (Memory Map)](#記憶體配置與硬體映射-memory-map)
@@ -27,6 +31,42 @@
   - [監聽 UART 遙測日誌](#3-監聽-uart-遙測日誌)
 - [預編譯成品 (Prebuilt Binaries)](#預編譯成品-prebuilt-binaries)
 - [與 Google Antigravity Agent 協同開發](#與-google-antigravity-agent-協同開發)
+
+---
+
+## 最新版本說明 (Release v1.0.0)
+
+本專案已正式發布 **v1.0.0**，詳細說明見 [RELEASE_NOTES.md](file:///Users/jaysun/Downloads/stm32h7-touchgfx-antigravity-kit/RELEASE_NOTES.md)。
+
+### 目前 UI 設計與視覺元件
+- **目標螢幕**：4.3 吋 480×272 16bpp (RGB565) LCD，深色科技主題（Slate Dark，底色 `#0F172A`）。
+- **首頁儀表板 (`DashboardScreen`)**：
+  - **背景與卡片佈局**：480×272 漸層底圖 (`bg_dashboard.png`)，搭配左右兩塊 216×160 毛玻璃質感面板 (`card_panel.png`)。
+  - **頂部動態狀態標題 (`titleText`)**：帶有 Wildcard 緩衝區之即時核心溫度顯示 (`STM32H7 Temp: <value> C`)。
+  - **左側負載指示條 (`loadBar`)**：`BoxProgress` 青藍色動態指示條 (`#38BDF8`)，呈現即時 CPU / 系統負載率 (0~100%)。
+  - **Boost 切換按鈕 (`btnBoost`)**：支援正常態與按下態按鈕 (`Toggle Boost LED`)，用以切換超頻狀態與控制板載 LED。
+  - **設定導航按鈕 (`btnNextScreen`)**：點擊切換至設定頁 (`Settings`)。
+- **系統設定畫面 (`SettingsScreen`)**：
+  - 全屏深色背景 (`settingsBg`) 與標題 (`System & Display Settings`)。
+  - 具備左下角返回按鈕 (`btnBack`)。
+
+### 系統核心功能
+1. **MVP (Model-View-Presenter) 狀態循環**：`Model` 每 30 ticks (~500ms) 定期透過 `ModelListener` 發送溫度與負載更新，由 Presenter 驅動 View 進行局部畫面重繪 (`invalidate`)。
+2. **動態數據渲染**：微控制器即時溫度浮點數格式化輸出至標題 Wildcard，負載進度條即時反應系統繁忙度。
+3. **軟硬體交互 (Boost LED 切換)**：按下 `btnBoost` 可切換 Model 的 `boostActive` 狀態（模擬負載跳升至 88%、溫度升至 31.2°C，並控制板載綠色 LED `LD7` (PJ2)）。
+4. **雙向平滑轉場動畫 (Screen Slide Transitions)**：
+   - 首頁點擊 `Settings`：往東平滑滑動 (`Slide East`) 至設定頁。
+   - 設定頁點擊 `Back`：往西平滑滑動 (`Slide West`) 返回主儀表板。
+
+### 四層驗證機制與結果
+1. **無頭代碼與圖資生成驗證** (`run_tgfx_cli.sh`)：成功產生 7 張 RGB565 PNG 圖資並轉出 C++ ViewBase / 字庫 / 圖庫，無語法錯誤。
+2. **ARM Cortex-M7 交叉編譯與記憶體配置驗證** (`build_firmware.sh`)：
+   - **Internal Flash (0x08000000)**: 1,216 Bytes (1.19 KB) 向量表與啟動代碼。
+   - **External QSPI Flash (0x90000000)**: 54,272 Bytes (53.00 KB) 7 張圖資與點陣字庫。
+   - **External SDRAM (0xD0000000)**: 522,240 Bytes (510.00 KB) 480×272 雙緩衝區。
+   - **HEX 映像檔**: 產出 `build/stm32h7_touchgfx.hex` 與 `prebuilt/`。
+3. **本機原生 Host 模擬器驗證** (`build/stm32h7_touchgfx_sim`)：macOS ARM64 原生編譯運行，驗證 Model、Presenter、ViewBase 與 Tick 事件迴圈無記憶體崩潰。
+4. **STLINK-V3E 探針與序列埠驗證** (`flash_board.sh` / `verify_serial.py`)：自動探測 USB SWD 介面，並以 115200 8N1 監聽 USART3 VCP 遙測。
 
 ---
 

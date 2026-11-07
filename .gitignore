@@ -1,0 +1,7 @@
+# Google Antigravity Workspace Ignore Rules
+.env
+credentials/
+temp/
+build/
+TouchGFX/build/
+.DS_Store

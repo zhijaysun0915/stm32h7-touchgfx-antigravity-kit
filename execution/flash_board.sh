@@ -9,18 +9,20 @@ set -e
 
 # Auto-detect Toolchain Directory
 TOOLCHAIN_DIR=""
-for candidate in "$HOME/toolchain" "/Users/jaysun/.gemini/users/user1/toolchain" "/opt/toolchain"; do
-  if [ -d "$candidate/pylib" ]; then
+for candidate in "$HOME/toolchain" "$HOME/.local" "/opt/toolchain"; do
+  if [ -d "$candidate/bin" ] || [ -d "$candidate/pylib" ]; then
     TOOLCHAIN_DIR="$candidate"
     break
   fi
 done
 
 if [ -n "$TOOLCHAIN_DIR" ]; then
-  export PYTHONPATH="$TOOLCHAIN_DIR/pylib:${PYTHONPATH:-}"
+  if [ -d "$TOOLCHAIN_DIR/pylib" ]; then
+    export PYTHONPATH="$TOOLCHAIN_DIR/pylib:${PYTHONPATH:-}"
+  fi
   export PATH="$TOOLCHAIN_DIR/bin:$TOOLCHAIN_DIR/pylib/bin:$PATH"
 fi
-export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+export PATH="$HOME/toolchain/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 ELF_FILE="${1:-build/stm32h7_touchgfx.elf}"
 if [ ! -f "$ELF_FILE" ] && [ -f "prebuilt/stm32h7_touchgfx.elf" ]; then

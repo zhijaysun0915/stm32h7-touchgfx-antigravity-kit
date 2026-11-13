@@ -10,18 +10,20 @@ set -e
 
 # Auto-detect Toolchain Directory
 TOOLCHAIN_DIR=""
-for candidate in "$HOME/toolchain" "/Users/jaysun/.gemini/users/user1/toolchain" "/opt/toolchain"; do
-  if [ -d "$candidate/pylib" ]; then
+for candidate in "$HOME/toolchain" "$HOME/.local" "/opt/toolchain"; do
+  if [ -d "$candidate/bin" ] || [ -d "$candidate/pylib" ]; then
     TOOLCHAIN_DIR="$candidate"
     break
   fi
 done
 
 if [ -n "$TOOLCHAIN_DIR" ]; then
-  export PYTHONPATH="$TOOLCHAIN_DIR/pylib:${PYTHONPATH:-}"
+  if [ -d "$TOOLCHAIN_DIR/pylib" ]; then
+    export PYTHONPATH="$TOOLCHAIN_DIR/pylib:${PYTHONPATH:-}"
+  fi
   export PATH="$TOOLCHAIN_DIR/bin:$TOOLCHAIN_DIR/pylib/bin:$PATH"
 fi
-export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+export PATH="$HOME/toolchain/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 BOARD_TYPE="${BOARD_TYPE:-STM32H750B_DK}" # STM32H750B_DK or STM32H745I_DISCO
 if [ "$BOARD_TYPE" = "STM32H745I_DISCO" ]; then
@@ -75,8 +77,16 @@ else
   exit 1
 fi
 
-echo "[Build] Step 3: Building & Running Native macOS Host Simulator..."
-clang++ -std=c++17 -O2 \
+echo "[Build] Step 3: Building & Running Host Simulator..."
+HOST_CXX="${CXX:-}"
+if [ -z "$HOST_CXX" ]; then
+  if command -v clang++ &> /dev/null; then
+    HOST_CXX="clang++"
+  else
+    HOST_CXX="g++"
+  fi
+fi
+"$HOST_CXX" -std=c++17 -O2 \
   $BOARD_DEFS \
   -ITouchGFX/stub_framework/include \
   -ITouchGFX/generated/images/include \

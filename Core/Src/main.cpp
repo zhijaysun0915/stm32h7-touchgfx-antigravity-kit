@@ -16,14 +16,14 @@
 #endif
 
 /* 480x272 RGB565 Double Framebuffer placed in External FMC SDRAM (0xD0000000) */
-#if defined(__APPLE__)
+#if !defined(__arm__) && !defined(__thumb__)
 __attribute__((aligned(32)))
 #else
 __attribute__((section("TouchGFX_Framebuffer"), used, aligned(32)))
 #endif
 uint16_t touchgfx_framebuffer[2][480 * 272];
 
-#if !defined(__APPLE__)
+#if defined(__arm__) || defined(__thumb__)
 /* Bare-metal C++ ABI & EABI support for freestanding Cortex-M7 */
 void operator delete(void*) noexcept {}
 void operator delete(void*, size_t) noexcept {}
@@ -37,11 +37,13 @@ extern void (*__preinit_array_end[])(void);
 extern void (*__init_array_start[])(void);
 extern void (*__init_array_end[])(void);
 
-int __cxa_atexit(void (*)(void*), void*, void*) { return 0; }
+__attribute__((weak)) int __cxa_atexit(void (*)(void*), void*, void*) { return 0; }
+#if defined(__clang__)
 void* __dso_handle = 0;
-int __aeabi_f2iz(float v) { return static_cast<int>(v); }
+#endif
+__attribute__((weak)) int __aeabi_f2iz(float v) { return static_cast<int>(v); }
 
-void __libc_init_array(void) {
+__attribute__((weak)) void __libc_init_array(void) {
     size_t count = __preinit_array_end - __preinit_array_start;
     for (size_t i = 0; i < count; i++) __preinit_array_start[i]();
     count = __init_array_end - __init_array_start;
@@ -111,7 +113,7 @@ int main(void) {
     /* TouchGFX 60Hz VSYNC Event Loop */
     while (1) {
         appModel.tick();
-#if defined(__APPLE__)
+#if !defined(__arm__) && !defined(__thumb__)
         break;
 #endif
     }

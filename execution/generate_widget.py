@@ -1,0 +1,265 @@
+import json, os, base64
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ASSETS_DIR = os.path.join(BASE_DIR, "TouchGFX", "assets", "images")
+ARTIFACT_DIR = "/home/antigravity/.gemini/jetski/brain/v1/default/jetski_remote_agents_3p/b9612dd2-3de8-4ae1-a878-41637388e54f"
+DOCS_DIR = os.path.join(BASE_DIR, "docs")
+
+assets = {}
+for filename in [
+    "bg_dashboard.png",
+    "btn_action_pressed.png",
+    "btn_action_released.png",
+    "btn_primary_pressed.png",
+    "btn_primary_released.png",
+    "card_panel.png",
+    "progress_bg.png"
+]:
+    with open(os.path.join(ASSETS_DIR, filename), "rb") as f:
+        assets[filename] = "data:image/png;base64," + base64.b64encode(f.read()).decode("ascii")
+
+widget_html = f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .led-glow-green {{
+      background: #22c55e;
+      box-shadow: 0 0 10px #22c55e, 0 0 20px rgba(34, 197, 94, 0.6);
+    }}
+    .led-off {{
+      background: #334155;
+    }}
+    .screen-container {{
+      width: 480px;
+      height: 272px;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+    }}
+    .screen-slide {{
+      width: 480px;
+      height: 272px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }}
+  </style>
+</head>
+<body class="bg-transparent text-[var(--foreground)] antialiased p-2">
+  <div class="bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] rounded-xl p-3 shadow-md max-w-[510px] mx-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between pb-2 mb-2 border-b border-[var(--border)] text-xs">
+      <div class="flex items-center space-x-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
+        <span class="font-bold tracking-wide">TouchGFX Virtual Twin</span>
+        <span class="px-1.5 py-0.2 bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 rounded text-[10px]">STM32H750B</span>
+      </div>
+      <div class="flex items-center space-x-3 text-[11px] font-mono">
+        <span class="text-[var(--muted-foreground)]">Tick: <span id="wTick" class="text-cyan-400 font-bold">0</span></span>
+        <span class="text-[var(--muted-foreground)]">Screen: <span id="wScreen" class="text-amber-400">Dashboard</span></span>
+      </div>
+    </div>
+
+    <!-- 480x272 Screen -->
+    <div class="relative rounded-lg overflow-hidden border border-slate-700 bg-slate-950 mx-auto shadow-inner" style="width: 480px; height: 272px;">
+      <div id="wLcd" class="screen-container">
+        
+        <!-- DashboardScreen -->
+        <div id="wScreenDash" class="screen-slide" style="transform: translateX(0px);">
+          <img src="{assets['bg_dashboard.png']}" class="absolute inset-0 w-full h-full object-cover pointer-events-none">
+          
+          <!-- Left Card -->
+          <div class="absolute left-[16px] top-[48px] w-[216px] h-[160px] pointer-events-none">
+            <img src="{assets['card_panel.png']}" class="w-full h-full">
+            <div class="absolute inset-0 p-3 flex flex-col justify-between">
+              <div>
+                <div class="text-[10px] font-bold text-slate-400 tracking-wider">SYSTEM TELEMETRY</div>
+                <div class="mt-1.5 space-y-1 text-[11px]">
+                  <div class="text-slate-300">Core : <span class="font-mono text-emerald-400">480 MHz</span></div>
+                  <div class="text-slate-300">FB : <span class="font-mono text-cyan-400">Double 16bpp</span></div>
+                  <div class="text-cyan-400 font-medium">Load : <span id="wLoadText" class="font-mono font-bold">64%</span></div>
+                </div>
+              </div>
+              <div class="relative w-[180px] h-[14px]">
+                <img src="{assets['progress_bg.png']}" class="w-full h-full">
+                <div id="wProgBar" class="absolute top-[2px] left-[2px] h-[10px] rounded-sm bg-cyan-400 transition-all duration-300" style="width: 115px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Card -->
+          <div class="absolute left-[248px] top-[48px] w-[216px] h-[160px] pointer-events-none">
+            <img src="{assets['card_panel.png']}" class="w-full h-full">
+            <div class="absolute inset-0 p-3">
+              <div class="text-[10px] font-bold text-slate-400 tracking-wider">HARDWARE CONTROL</div>
+              <div class="mt-2 text-[11px] text-slate-300">Actuator: <span class="text-emerald-400 font-mono">LD7 (PJ2)</span></div>
+              <div class="mt-1 text-[11px] text-slate-400">Boost: <span id="wBoostBadge" class="font-bold text-slate-400">OFF</span></div>
+            </div>
+          </div>
+
+          <!-- Title -->
+          <div class="absolute left-[16px] top-[12px] text-sm font-bold text-slate-100 pointer-events-none">
+            STM32H7 Temp: <span id="wTempText" class="text-cyan-400 font-mono">26.5</span> °C
+          </div>
+
+          <!-- Boost Button -->
+          <button id="wBtnBoost" class="absolute left-[264px] top-[104px] w-[184px] h-[42px] focus:outline-none transition active:scale-95">
+            <img id="wBtnBoostImg" src="{assets['btn_action_released.png']}" class="w-full h-full pointer-events-none">
+            <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white pointer-events-none">
+              Toggle Boost LED
+            </span>
+          </button>
+
+          <!-- Settings Button -->
+          <button id="wBtnSettings" class="absolute left-[340px] top-[220px] w-[124px] h-[40px] focus:outline-none transition active:scale-95">
+            <img id="wBtnNextImg" src="{assets['btn_primary_released.png']}" class="w-full h-full pointer-events-none">
+            <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white pointer-events-none">
+              Settings &gt;
+            </span>
+          </button>
+        </div>
+
+        <!-- SettingsScreen -->
+        <div id="wScreenSet" class="screen-slide bg-slate-900" style="transform: translateX(480px);">
+          <div class="absolute left-0 top-0 w-full h-[44px] bg-slate-800 border-b border-slate-700 px-4 flex items-center justify-between">
+            <span class="text-xs font-bold text-white">System &amp; Display Settings</span>
+            <span class="text-[10px] font-mono text-cyan-400 bg-slate-950 px-1.5 py-0.5 rounded">STM32H750B-DK</span>
+          </div>
+          <div class="absolute left-[20px] top-[60px] w-[440px] h-[60px] bg-slate-800/80 border border-slate-700 rounded-lg p-3 flex items-center justify-between">
+            <div>
+              <div class="text-xs font-semibold text-slate-200">PWM Backlight Level</div>
+              <div class="text-[11px] text-slate-400">TIM1 CH1: <span id="wBrightText" class="text-cyan-400 font-mono">80%</span></div>
+            </div>
+            <input id="wBrightSlider" type="range" min="20" max="100" value="80" class="w-40 accent-cyan-400 cursor-pointer">
+          </div>
+          <button id="wBtnBack" class="absolute left-[16px] top-[220px] w-[124px] h-[40px] focus:outline-none transition active:scale-95">
+            <img id="wBtnBackImg" src="{assets['btn_primary_released.png']}" class="w-full h-full pointer-events-none">
+            <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white pointer-events-none">
+              &lt; Back
+            </span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer Controls & Actuators -->
+    <div class="mt-2.5 pt-2 border-t border-[var(--border)] flex items-center justify-between text-xs">
+      <div class="flex items-center space-x-3">
+        <!-- LD7 LED -->
+        <div class="flex items-center space-x-1.5 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+          <div id="wLedLD7" class="w-3.5 h-3.5 rounded-full led-off transition-all duration-200"></div>
+          <span class="font-mono text-[11px] text-slate-300">LD7 (PJ2):</span>
+          <span id="wLedStatus" class="font-bold text-[11px] text-slate-500">OFF</span>
+        </div>
+        <!-- EXTI Blue Key -->
+        <button id="wHwKey" class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-[11px] font-bold shadow">
+          [B1] USER KEY
+        </button>
+      </div>
+      <div class="text-[11px] text-[var(--muted-foreground)]">
+        💡 點擊畫面上按鈕測試即時互動與轉場
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ASSETS = {json.dumps(assets)};
+    let boost = false;
+    let temp = 26.5;
+    let load = 64;
+    let ticks = 0;
+
+    const wTick = document.getElementById("wTick");
+    const wScreen = document.getElementById("wScreen");
+    const wScreenDash = document.getElementById("wScreenDash");
+    const wScreenSet = document.getElementById("wScreenSet");
+    const wTempText = document.getElementById("wTempText");
+    const wLoadText = document.getElementById("wLoadText");
+    const wProgBar = document.getElementById("wProgBar");
+    const wBoostBadge = document.getElementById("wBoostBadge");
+    const wLedLD7 = document.getElementById("wLedLD7");
+    const wLedStatus = document.getElementById("wLedStatus");
+    const wBtnBoost = document.getElementById("wBtnBoost");
+    const wBtnBoostImg = document.getElementById("wBtnBoostImg");
+    const wBtnSettings = document.getElementById("wBtnSettings");
+    const wBtnNextImg = document.getElementById("wBtnNextImg");
+    const wBtnBack = document.getElementById("wBtnBack");
+    const wBtnBackImg = document.getElementById("wBtnBackImg");
+    const wBrightSlider = document.getElementById("wBrightSlider");
+    const wBrightText = document.getElementById("wBrightText");
+    const wLcd = document.getElementById("wLcd");
+
+    function toggleBoost() {{
+      boost = !boost;
+      if (boost) {{
+        wLedLD7.className = "w-3.5 h-3.5 rounded-full led-glow-green";
+        wLedStatus.textContent = "ON";
+        wLedStatus.className = "font-bold text-[11px] text-emerald-400";
+        wBoostBadge.textContent = "ON";
+        wBoostBadge.className = "font-bold text-emerald-400";
+        temp = 31.2;
+        load = 88;
+      }} else {{
+        wLedLD7.className = "w-3.5 h-3.5 rounded-full led-off";
+        wLedStatus.textContent = "OFF";
+        wLedStatus.className = "font-bold text-[11px] text-slate-500";
+        wBoostBadge.textContent = "OFF";
+        wBoostBadge.className = "font-bold text-slate-400";
+        temp = 26.5;
+        load = 42;
+      }}
+      wTempText.textContent = temp.toFixed(1);
+      wLoadText.textContent = load + "%";
+      wProgBar.style.width = Math.round((load / 100) * 176) + "px";
+    }}
+
+    wBtnBoost.addEventListener("mousedown", () => {{ wBtnBoostImg.src = ASSETS["btn_action_pressed.png"]; }});
+    wBtnBoost.addEventListener("mouseup", () => {{
+      wBtnBoostImg.src = ASSETS["btn_action_released.png"];
+      toggleBoost();
+    }});
+
+    wBtnSettings.addEventListener("mousedown", () => {{ wBtnNextImg.src = ASSETS["btn_primary_pressed.png"]; }});
+    wBtnSettings.addEventListener("mouseup", () => {{
+      wBtnNextImg.src = ASSETS["btn_primary_released.png"];
+      wScreen.textContent = "Settings";
+      wScreenDash.style.transform = "translateX(-480px)";
+      wScreenSet.style.transform = "translateX(0px)";
+    }});
+
+    wBtnBack.addEventListener("mousedown", () => {{ wBtnBackImg.src = ASSETS["btn_primary_pressed.png"]; }});
+    wBtnBack.addEventListener("mouseup", () => {{
+      wBtnBackImg.src = ASSETS["btn_primary_released.png"];
+      wScreen.textContent = "Dashboard";
+      wScreenDash.style.transform = "translateX(0px)";
+      wScreenSet.style.transform = "translateX(480px)";
+    }});
+
+    document.getElementById("wHwKey").addEventListener("click", toggleBoost);
+
+    wBrightSlider.addEventListener("input", (e) => {{
+      wBrightText.textContent = e.target.value + "%";
+      wLcd.style.filter = "brightness(" + e.target.value + "%)";
+    }});
+
+    setInterval(() => {{
+      ticks++;
+      wTick.textContent = ticks;
+    }}, 16.66);
+  </script>
+</body>
+</html>
+"""
+
+with open(os.path.join(DOCS_DIR, "touchgfx_simulator_widget.html"), "w", encoding="utf-8") as f:
+    f.write(widget_html)
+print("Saved widget to docs/touchgfx_simulator_widget.html")
+
+if os.path.isdir(ARTIFACT_DIR):
+    with open(os.path.join(ARTIFACT_DIR, "touchgfx_simulator_widget.html"), "w", encoding="utf-8") as f:
+        f.write(widget_html)
+    print("Saved widget artifact to", os.path.join(ARTIFACT_DIR, "touchgfx_simulator_widget.html"))

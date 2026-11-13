@@ -3,5 +3,6 @@
 credentials/
 temp/
 build/
+build_cmake/
 TouchGFX/build/
 .DS_Store
